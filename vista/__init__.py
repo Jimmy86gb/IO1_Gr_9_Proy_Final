@@ -1,5 +1,5 @@
 """
-Paquete VISTA: todo lo que se ve en pantalla.
+Paquete VISTA todo lo que se ve en pantalla.
 No contiene la matemática de los métodos (está en modelo/).
 """
 from .formato import FORMATO, FormatoNumeros
@@ -8,6 +8,7 @@ from .tema import COLORES, FUENTES, aplicar_tema
 from .ventana_principal import VentanaPrincipal
 from .vista_ayuda import VistaAyuda
 from .vista_inicio import VistaInicio
+from .vogel import VistaVogel
 
-__all__ = ["FORMATO", "FormatoNumeros", "COLORES", "FUENTES", "aplicar_tema", "VentanaPrincipal",
-           "VistaInicio", "VistaSimplex", "VistaAyuda"]
+__all__ = ["FORMATO", "FormatoNumeros", "COLORES", "FUENTES", "aplicar_tema", "VentanaPrincipal", "VistaInicio",
+           "VistaSimplex", "VistaVogel", "VistaAyuda"]

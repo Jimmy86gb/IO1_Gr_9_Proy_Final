@@ -4,7 +4,7 @@ vista/componentes/widgets.py
 Componentes visuales reutilizables (solo presentación, sin matemática):
 
 * MarcoDesplazable: área con barras de desplazamiento y rueda del ratón.
-* Tarjeta: recuadro blanco con título.
+* Tarjeta: recuadro blanco con título (estilo moderno tipo "card").
 * Aviso: mensaje de color para casos especiales (error, advertencia, info, éxito).
 * Campo: casilla de texto que se pone roja cuando tiene un error.
 * TextoRico: texto de solo lectura con estilos (títulos, negrillas, fórmulas).
@@ -327,14 +327,14 @@ class TextoRico(tk.Frame):
         t.tag_configure("pequena", font=FUENTES["pequena"], foreground=c["texto_suave"])
         t.tag_configure("mono", font=FUENTES["mono"])
         t.tag_configure("formula", font=FUENTES["mono"], background=c["superficie_alt"],
-                        lmargin1=18, lmargin2=18, foreground=c["texto"])
+                        lmargin1=18, lmargin2=18, foreground="#1E293B")
         t.tag_configure("vineta", lmargin1=14, lmargin2=30)
         t.tag_configure("exito", foreground=c["exito"], font=FUENTES["base_negrita"])
         t.tag_configure("error", foreground=c["error"], font=FUENTES["base_negrita"])
         t.tag_configure("advertencia", foreground=c["advertencia"], font=FUENTES["base_negrita"])
         t.tag_configure("info", foreground=c["info"], font=FUENTES["base_negrita"])
-        t.tag_configure("entra", foreground=c["entra"], font=FUENTES["base_negrita"])
-        t.tag_configure("sale", foreground=c["sale"], font=FUENTES["base_negrita"])
+        t.tag_configure("entra", foreground="#1D4ED8", font=FUENTES["base_negrita"])
+        t.tag_configure("sale", foreground="#C2410C", font=FUENTES["base_negrita"])
         t.tag_configure("pivote", background=c["celda_pivote"], foreground="#FFFFFF",
                         font=FUENTES["base_negrita"])
         t.tag_configure("resaltado", background=c["razon_minima"])
@@ -385,19 +385,20 @@ def etiqueta(master, texto: str, fuente: str = "base", color: str = "texto", fon
 
 
 def tarjeta_dato(master, titulo: str, valor: str, color: str = "primario", detalle: str = ""):
-    """Recuadro con un dato destacado."""
+    """Recuadro con un dato grande (KPI)."""
     caja = tk.Frame(master, bg=COLORES["superficie"], highlightbackground=COLORES["borde"], highlightthickness=1)
-    tk.Label(caja, text=titulo, font=FUENTES["pequena"], bg=COLORES["superficie"],
-             fg=COLORES["texto_suave"], anchor="w").pack(fill="x", padx=10, pady=(8, 0))
+    tk.Frame(caja, bg=COLORES[color], height=4).pack(fill="x")
+    tk.Label(caja, text=titulo, font=FUENTES["pequena_negrita"], bg=COLORES["superficie"],
+             fg=COLORES["texto_suave"], anchor="w").pack(fill="x", padx=14, pady=(10, 0))
     tk.Label(caja, text=valor, font=FUENTES["grande"] if len(valor) <= 9 else FUENTES["h2"],
-             bg=COLORES["superficie"], fg=COLORES[color], anchor="w").pack(fill="x", padx=10)
+             bg=COLORES["superficie"], fg=COLORES[color], anchor="w").pack(fill="x", padx=14)
     if detalle:
         texto = tk.Label(caja, text=detalle, font=FUENTES["pequena"], bg=COLORES["superficie"],
                          fg=COLORES["texto_suave"], anchor="w", justify="left", wraplength=150)
-        texto.pack(fill="x", padx=10, pady=(0, 8))
-        caja.bind("<Configure>", lambda e: texto.configure(wraplength=max(120, e.width - 26)), add="+")
+        texto.pack(fill="x", padx=14, pady=(0, 10))
+        caja.bind("<Configure>", lambda e: texto.configure(wraplength=max(120, e.width - 34)), add="+")
     else:
-        tk.Frame(caja, bg=COLORES["superficie"], height=8).pack()
+        tk.Frame(caja, bg=COLORES["superficie"], height=10).pack()
     return caja
 
 
@@ -444,7 +445,7 @@ class DesplazableHorizontal(tk.Frame):
 
 
 def tabla_desplazable(master, clase, *args, **kwargs):
-    """Crea una tabla (TablaCanvas) dentro de un DesplazableHorizontal."""
+    """Crea una tabla (TablaCanvas o TablaTransporteCanvas) dentro de un DesplazableHorizontal."""
     contenedor = DesplazableHorizontal(master, fondo=master.cget("bg"))
     contenedor.pack(fill="x", anchor="w")
     tabla = clase(contenedor.interior, *args, **kwargs)
@@ -453,7 +454,7 @@ def tabla_desplazable(master, clase, *args, **kwargs):
 
 
 class FilaFlexible(tk.Frame):
-    """Fila de recuadros que pasa a varias filas cuando la ventana es angosta."""
+    """Fila de tarjetas que pasa a varias filas cuando la ventana es angosta."""
 
     def __init__(self, master, ancho_minimo: int = 210, separacion: int = 10, **kwargs):
         super().__init__(master, bg=master.cget("bg"), **kwargs)
