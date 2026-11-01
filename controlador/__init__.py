@@ -4,5 +4,6 @@ usa el modelo para resolver y devuelve los resultados a la vista.
 """
 from .controlador_principal import ControladorPrincipal
 from .controlador_simplex import ControladorSimplex
+from .controlador_vogel import ControladorVogel
 
-__all__ = ["ControladorPrincipal", "ControladorSimplex"]
+__all__ = ["ControladorPrincipal", "ControladorSimplex", "ControladorVogel"]

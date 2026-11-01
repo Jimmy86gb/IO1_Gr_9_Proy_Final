@@ -13,7 +13,8 @@ from .componentes.widgets import instalar_rueda_global
 from .formato import FORMATO, MODO_DECIMAL, MODO_FRACCION
 from .tema import COLORES, FUENTES, aplicar_tema, px
 
-OPCIONES_NAVEGACION = (("inicio", "Inicio"), ("simplex", "Método Simplex"), ("ayuda", "Ayuda"))
+OPCIONES_NAVEGACION = (("inicio", "Inicio"), ("simplex", "Método Simplex"), ("vogel", "Método de Vogel"),
+                       ("ayuda", "Ayuda"))
 
 
 class VentanaPrincipal(tk.Tk):
@@ -21,7 +22,7 @@ class VentanaPrincipal(tk.Tk):
         super().__init__()
         self._al_navegar = al_navegar
         self._botones_nav = {}
-        self.title("IO1 · Grupo 9 — Método Simplex")
+        self.title("IO1 · Grupo 9 — Simplex y Vogel")
         self.geometry(f"{min(1360, self.winfo_screenwidth() - 40)}x{min(840, self.winfo_screenheight() - 100)}")
         self.minsize(1040, 600)
         aplicar_tema(self)

@@ -218,3 +218,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Entornos y editores
+.venv/
+venv/
+.idea/
+.vscode/
+
+# Archivos generados por Python
+__pycache__/
+*.pyc
+
+# Archivos generados al crear el .exe
+build/
+dist/
+*.spec
