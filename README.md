@@ -11,7 +11,7 @@ Software de escritorio en **Python** que resuelve, paso a paso, problemas de **P
 | **Grupo del proyecto** | Grupo 9 · Métodos asignados: **Simplex** y **Vogel** · Lenguaje: **Python** |
 | **Caso real**          | Cementos Argos S.A. – Línea de Concreto Premezclado (Regional Bogotá)       |
 | **Ciudad**             | Bogotá D.C., Colombia                                                       |
-| **Segunda Entrega**    | 27 de Octubre de 2026                                                       |
+| **Entrega Final**    | 3 de Noviembre de 2026                                                       |
 
 ### Integrantes
 
