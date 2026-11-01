@@ -27,7 +27,7 @@ Software de escritorio en **Python** que resuelve, paso a paso, problemas de **P
 ## Contenido
 
 ## Contenido
-
+- [Descargar el programa (sin instalar Python)](#descargar-el-programa-sin-instalar-python)
 1. [¿Qué hace el software?](#1-qué-hace-el-software)
 2. [Requisitos](#2-requisitos)
 3. [Instalar Python](#3-instalar-python)
@@ -60,6 +60,22 @@ El programa tiene los **dos métodos asignados al Grupo 9** (tabla de la Secció
 * Resultados con los **nombres y unidades** del problema (no solo x1, x2).
 * **Validación**: casillas vacías, texto o datos imposibles se marcan en rojo con un mensaje claro y el programa **no se cierra**.
 * **Ejemplos precargados** (caso real + problemas de prueba), y la opción de **guardar y abrir** problemas en archivos `.json`.
+
+---
+
+## Descargar el programa (sin instalar Python)
+
+Para usar el programa no hace falta instalar nada:
+
+1. Entre a la sección **Releases** de este repositorio y descargue `IO1_Grupo9.zip`.
+2. Descomprima el archivo (clic derecho → **Extraer todo…**).
+3. Abra la carpeta `IO1_Grupo9` y haga doble clic en **`IO1_Grupo9.exe`**.
+
+> Solo funciona en Windows. Si Windows muestra un aviso de "editor desconocido",
+> pulse **Más información → Ejecutar de todas formas**.
+> No mueva el `.exe` fuera de su carpeta: necesita los demás archivos que están junto a él.
+
+Si prefiere ejecutar el código con Python, siga las secciones 2 a 5.
 
 ---
 
