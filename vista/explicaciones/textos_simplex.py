@@ -144,16 +144,16 @@ def datos_tabla(resultado: ResultadoSimplex, indice: int, fmt, iteracion=None) -
             c["alternativo"] if it.estado == OPTIMA else c["col_pivote"])
         for r in range(2, 4 + t.m):
             estilos[(r, k)] = {"bg": color_columna}
-        estilos[(1, k)] = {"bg": "#1D4ED8" if it.estado == CONTINUA else (
+        estilos[(1, k)] = {"bg": c["entra"] if it.estado == CONTINUA else (
             c["error"] if it.estado == NO_ACOTADA else c["alternativo_texto"]), "fg": "#FFFFFF", "negrita": True}
         estilos[(fila_cz_idx, k)] = {"bg": color_columna, "negrita": True,
-                                     "fg": "#1D4ED8" if it.estado == CONTINUA else c["texto"]}
+                                     "fg": c["entra"] if it.estado == CONTINUA else c["texto"]}
     if it.fila_sale is not None:
         r = 2 + it.fila_sale
         for col in range(0, len(filas[1])):
             estilos.setdefault((r, col), {})
             estilos[(r, col)] = {**estilos[(r, col)], "bg": c["fila_pivote"]}
-        estilos[(r, 0)] = {"bg": "#C2410C", "fg": "#FFFFFF", "negrita": True}
+        estilos[(r, 0)] = {"bg": c["sale"], "fg": "#FFFFFF", "negrita": True}
         if it.columna_entra is not None:
             estilos[(r, 2 + it.columna_entra)] = {"bg": c["celda_pivote"], "fg": "#FFFFFF", "negrita": True}
         if mostrar_razones:

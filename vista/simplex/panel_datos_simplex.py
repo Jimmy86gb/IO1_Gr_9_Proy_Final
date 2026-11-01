@@ -57,8 +57,8 @@ class PanelDatosSimplex(tk.Frame):
         # El botón Resolver se coloca primero para que siempre quede visible
         ttk.Button(interior, text="Resolver con Simplex  ►", style="Primario.TButton",
                    command=lambda: self._llamar("resolver")).pack(side="right")
-        etiqueta(interior, "Ejemplos precargados:", "base_negrita").pack(side="left")
-        self.combo_ejemplos = ttk.Combobox(interior, textvariable=self.var_ejemplo, state="readonly", width=40)
+        etiqueta(interior, "Ejemplos:", "base_negrita").pack(side="left")
+        self.combo_ejemplos = ttk.Combobox(interior, textvariable=self.var_ejemplo, state="readonly", width=26)
         self.combo_ejemplos.pack(side="left", padx=(8, 6))
         ttk.Button(interior, text="Cargar ejemplo", style="Chico.TButton",
                    command=lambda: self._llamar("cargar_ejemplo", self.combo_ejemplos.current())).pack(side="left")

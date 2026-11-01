@@ -1,22 +1,19 @@
 """
 modelo/transporte/optimizador_modi.py
 =====================================
-PRUEBA DE OPTIMALIDAD (método MODI o de los multiplicadores u-v).
+Método MODI: revisa si la solución de Vogel se puede mejorar y, si se
+puede, la mejora hasta llegar a la mejor. Así se compara el costo de Vogel
+con el mejor costo posible.
 
-Complemento de Vogel: Vogel solo da una solución inicial. MODI revisa si
-esa solución es óptima y, si no lo es, la mejora hasta el óptimo. Así se
-puede comparar el costo de Vogel con el costo óptimo (la guía pide además
-verificarlo aparte, por ejemplo con el Solver de Excel).
-
-  PASO 1. Con las m + n − 1 celdas básicas se resuelve u_i + v_j = c_ij
-          (se fija u = 0 en la fila con más celdas básicas).
-  PASO 2. Para cada celda NO básica: costo reducido d_ij = c_ij − u_i − v_j.
-  PASO 3. Si todos los d_ij >= 0 la solución es ÓPTIMA (si algún d_ij = 0
-          hay óptimos alternativos).
-  PASO 4. Si no, ENTRA la celda con el d_ij más negativo y se forma el ciclo
-          cerrado (+ − + − ...) con celdas básicas.
-  PASO 5. θ = menor asignación de las celdas (−). Se suma θ en las celdas (+),
-          se resta en las (−) y SALE la celda (−) que queda en 0. Volver al PASO 1.
+  1. Se calculan unos valores u (por fila) y v (por columna) con las
+     celdas que tienen envío: u_i + v_j = costo.
+  2. Para cada celda sin envío se calcula d_ij = costo − u_i − v_j.
+  3. Si todos los d_ij son 0 o más, ya es la mejor solución
+     (si alguno es 0, hay otra solución con el mismo costo).
+  4. Si no, entra la celda con el d_ij más negativo y se arma un camino
+     cerrado (+ − + − ...) con celdas que tienen envío.
+  5. Se mueve la cantidad θ (la menor de las celdas −): se suma en las (+)
+     y se resta en las (−). Se vuelve al paso 1.
 """
 from __future__ import annotations
 
@@ -36,16 +33,16 @@ ESTADO_LIMITE = "limite_iteraciones"
 @dataclass
 class IteracionMODI:
     numero: int
-    asignaciones: dict                 # celdas básicas ANTES del cambio {(i, j): x_ij}
+    asignaciones: dict                 # envíos ANTES del cambio {(i, j): cantidad}
     u: list[ValorM]
     v: list[ValorM]
-    fila_referencia: int               # fila donde se fijó u = 0
-    costos_reducidos: dict             # {(i, j): d_ij} de las celdas no básicas
+    fila_referencia: int               # fila donde u = 0
+    costos_reducidos: dict             # {(i, j): d_ij} de las celdas sin envío
     es_optima: bool
     costo: ValorM
     entra: tuple | None = None
     empate_entrada: list = field(default_factory=list)
-    ciclo: list = field(default_factory=list)   # celdas del ciclo; posición par = (+), impar = (−)
+    ciclo: list = field(default_factory=list)   # celdas del camino; posición par = (+), impar = (−)
     theta: Fraction | None = None
     sale: tuple | None = None
     empate_salida: list = field(default_factory=list)
@@ -54,11 +51,11 @@ class IteracionMODI:
 @dataclass
 class ResultadoMODI:
     iteraciones: list[IteracionMODI]
-    asignaciones: dict                 # solución óptima {(i, j): x_ij}
+    asignaciones: dict                 # mejor solución {(i, j): cantidad}
     costo_inicial: ValorM
     costo_optimo: ValorM
     estado: str
-    celdas_alternativas: list          # no básicas con d_ij = 0 en la tabla óptima
+    celdas_alternativas: list          # celdas sin envío con d_ij = 0 en la mejor solución
     rutas_prohibidas_usadas: list
     casos: list[CasoEspecial] = field(default_factory=list)
 
@@ -156,14 +153,14 @@ class OptimizadorMODI:
                 anti_ciclaje = True
             bases_vistas.add(clave)
 
-            # PASO 1 y PASO 2: potenciales y costos reducidos
+            # PASO 1 y 2: valores u, v y d_ij
             u, v, referencia = self._potenciales(basicas)
             reducidos = {(i, j): self.costos[i][j] - u[i] - v[j]
                          for i in range(self.m) for j in range(self.n) if (i, j) not in asignaciones}
             costo = self._costo(asignaciones)
             negativos = [c for c, d in reducidos.items() if d < 0]
 
-            # PASO 3: prueba de optimalidad
+            # PASO 3: ¿ya es la mejor?
             if not negativos:
                 iteraciones.append(IteracionMODI(numero, dict(asignaciones), u, v, referencia,
                                                  reducidos, True, costo))
@@ -174,7 +171,7 @@ class OptimizadorMODI:
                                                  reducidos, False, costo))
                 break
 
-            # PASO 4: celda que entra y ciclo
+            # PASO 4: celda que entra y camino
             if anti_ciclaje:
                 entra, empate = negativos[0], []
             else:
@@ -183,7 +180,7 @@ class OptimizadorMODI:
                 entra, empate = empatadas[0], (empatadas if len(empatadas) > 1 else [])
             ciclo = self._ciclo(basicas, entra)
 
-            # PASO 5: θ, celda que sale y actualización
+            # PASO 5: cantidad θ, celda que sale y actualización
             menos = ciclo[1::2]
             theta = min(asignaciones[c] for c in menos)
             empate_salida = [c for c in menos if asignaciones[c] == theta]
@@ -215,36 +212,34 @@ class OptimizadorMODI:
     def _casos_especiales(self, r: ResultadoMODI) -> None:
         nombres_o, nombres_d = self.vogel.origenes, self.vogel.destinos
         if r.estado != ESTADO_OPTIMO:
-            r.casos.append(CasoEspecial(INFORMATIVO, "Límite de iteraciones",
-                                        f"MODI se detuvo tras {self.MAX_ITERACIONES} iteraciones.",
+            r.casos.append(CasoEspecial(INFORMATIVO, "Límite de revisiones",
+                                        f"MODI se detuvo tras {self.MAX_ITERACIONES} revisiones.",
                                         NIVEL_ERROR))
             return
         if r.rutas_prohibidas_usadas:
             celdas = ", ".join(f"{nombres_o[i]} → {nombres_d[j]}" for i, j in r.rutas_prohibidas_usadas)
             r.casos.append(CasoEspecial(
-                INFACTIBLE, "Problema INFACTIBLE con las rutas permitidas",
-                f"Incluso la solución óptima necesita usar rutas prohibidas (costo M): {celdas}. No es "
-                f"posible atender la demanda usando solo las rutas permitidas. Revise las rutas, la oferta o "
-                f"la demanda.", NIVEL_ERROR))
+                INFACTIBLE, "Sin solución con las rutas permitidas",
+                f"Hasta la mejor solución necesita usar rutas prohibidas (costo M): {celdas}. Con las rutas "
+                f"permitidas no se puede atender la demanda. Revise las rutas, la oferta o la demanda.", NIVEL_ERROR))
         elif r.vogel_es_optimo:
             r.casos.append(CasoEspecial(
-                INFORMATIVO, "La solución de Vogel ya es ÓPTIMA",
-                "Todos los costos reducidos d_ij de las celdas no básicas son >= 0, así que no existe "
-                "un envío que baje el costo total.", NIVEL_EXITO))
+                INFORMATIVO, "La solución de Vogel ya es la mejor",
+                "Todos los d_ij de las celdas sin envío son 0 o más, así que ningún cambio baja el costo total.", NIVEL_EXITO))
         else:
             r.casos.append(CasoEspecial(
-                INFORMATIVO, "Vogel NO era óptima: MODI la mejoró",
-                f"Costo con Vogel = {texto_numero(r.costo_inicial)}; costo óptimo = "
+                INFORMATIVO, "Vogel se pudo mejorar con MODI",
+                f"Costo con Vogel = {texto_numero(r.costo_inicial)}; mejor costo = "
                 f"{texto_numero(r.costo_optimo)}; ahorro = {texto_numero(r.ahorro)} en "
-                f"{len(r.iteraciones) - 1} iteración(es) de MODI.", NIVEL_INFO))
+                f"{len(r.iteraciones) - 1} mejora(s).", NIVEL_INFO))
         if r.celdas_alternativas:
             celdas = ", ".join(f"({nombres_o[i]}, {nombres_d[j]})" for i, j in r.celdas_alternativas)
             r.casos.append(CasoEspecial(
-                OPTIMOS_ALTERNATIVOS, "Óptimos alternativos en transporte",
-                f"Las celdas no básicas {celdas} tienen d_ij = 0: se puede cambiar la distribución sin "
-                f"cambiar el costo total óptimo.", NIVEL_ADVERTENCIA))
+                OPTIMOS_ALTERNATIVOS, "Hay otra solución igual de buena",
+                f"Las celdas sin envío {celdas} tienen d_ij = 0: se puede cambiar la distribución sin "
+                f"cambiar el costo total.", NIVEL_ADVERTENCIA))
         if any(it.theta == 0 for it in r.iteraciones if it.theta is not None):
             r.casos.append(CasoEspecial(
-                DEGENERACION, "Iteración degenerada en MODI",
-                "En alguna iteración θ = 0: cambió la base pero no el costo (efecto de la degeneración).",
+                DEGENERACION, "Mejora sin cambio de costo",
+                "En alguna mejora θ = 0: cambió la distribución pero no el costo (efecto de la degeneración).",
                 NIVEL_INFO))

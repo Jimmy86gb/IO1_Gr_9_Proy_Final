@@ -1,31 +1,23 @@
 """
 modelo/transporte/solver_vogel.py
 =================================
-MÉTODO DE APROXIMACIÓN DE VOGEL (MAV), programado desde cero.
+Método de aproximación de Vogel, programado desde cero.
 
-  PASO 0. Balanceo: si la oferta total es distinta de la demanda total se
-          agrega un DESTINO FICTICIO (sobra oferta) o un ORIGEN FICTICIO
-          (falta oferta) con costo 0 y la diferencia como demanda/oferta.
-  PASO 1. Penalizaciones: para cada fila y columna activa,
-          penalización = segundo menor costo − menor costo.
-  PASO 2. Se escoge la línea (fila o columna) con la MAYOR penalización.
-          Empate de penalización -> criterios en orden:
-            a) la línea cuyo costo mínimo sea menor,
-            b) la que permita asignar más unidades,
-            c) la primera (filas antes que columnas, de arriba a abajo).
-  PASO 3. En esa línea se escoge la celda de MENOR costo (empate: la que
-          permita asignar más; luego la primera) y se asigna
-          x_ij = mín(oferta_i, demanda_j).
-  PASO 4. Se restan las unidades y se TACHA la línea satisfecha. Si fila y
-          columna se satisfacen a la vez (degeneración) se tacha solo una;
-          la otra queda con 0 y luego recibe una asignación básica de 0.
-  PASO 5. Si queda una sola fila (o columna) activa, sus celdas se asignan
-          por costo mínimo. Si todo lo que queda tiene oferta y demanda 0,
-          las básicas de valor 0 se escogen por costo mínimo.
-  PASO 6. Se repite hasta que quede una sola línea. Siempre se obtienen
-          m + n − 1 variables básicas. Costo total = Σ c_ij · x_ij.
+  0. Si la oferta total y la demanda total no son iguales, se agrega un
+     destino ficticio (sobra oferta) o un origen ficticio (falta oferta)
+     con costo 0.
+  1. Cada fila y cada columna recibe una penalización:
+     segundo costo más bajo − costo más bajo.
+  2. Se elige la fila o columna con la MAYOR penalización. Si hay empate:
+     la de menor costo, luego la que permita enviar más, luego la primera.
+  3. En esa fila o columna se usa la celda de MENOR costo y se envía lo
+     máximo posible: x = mín(oferta, demanda).
+  4. Se tacha la fila o columna que quedó completa. Si se completan las
+     dos a la vez (degeneración), solo se tacha una.
+  5. Si solo queda una fila o columna, se llena por costo mínimo.
+  6. Se repite hasta terminar. Costo total = suma de costo × cantidad.
 
-Vogel da una SOLUCIÓN INICIAL (buena, pero no siempre la óptima).
+Vogel da una buena solución inicial, pero no siempre es la mejor.
 """
 from __future__ import annotations
 
@@ -41,10 +33,10 @@ from .problema_transporte import ProblemaTransporte
 FILA = "fila"
 COLUMNA = "columna"
 
-MODO_PENALIZACION = "penalizacion"     # pasos normales de Vogel
-MODO_UNICA_FILA = "unica_fila"         # queda una sola fila activa
-MODO_UNICA_COLUMNA = "unica_columna"   # queda una sola columna activa
-MODO_CEROS = "ceros"                   # todo lo que queda tiene oferta y demanda 0
+MODO_PENALIZACION = "penalizacion"     # pasos normales
+MODO_UNICA_FILA = "unica_fila"         # queda una sola fila
+MODO_UNICA_COLUMNA = "unica_columna"   # queda una sola columna
+MODO_CEROS = "ceros"                   # ya no queda nada por enviar
 
 CRITERIO_MENOR_COSTO = "menor_costo"
 CRITERIO_MAYOR_ASIGNACION = "mayor_asignacion"
@@ -55,9 +47,9 @@ CRITERIO_ORDEN = "orden"
 class PenalizacionLinea:
     tipo: str                    # FILA o COLUMNA
     indice: int
-    menor: ValorM                # menor costo activo
-    segundo: ValorM | None       # segundo menor costo activo
-    penalizacion: ValorM | None  # segundo − menor
+    menor: ValorM                # costo más bajo
+    segundo: ValorM | None       # segundo costo más bajo
+    penalizacion: ValorM | None  # segundo − más bajo
     costos_activos: list = field(default_factory=list)
 
 
@@ -71,17 +63,17 @@ class PasoVogel:
     demanda_antes: list[Fraction]
     penalizaciones_filas: dict
     penalizaciones_columnas: dict
-    linea: tuple | None                  # (FILA|COLUMNA, índice) escogida
-    empate_lineas: list                  # líneas empatadas en la mayor penalización
+    linea: tuple | None                  # (FILA o COLUMNA, número) elegida
+    empate_lineas: list                  # filas/columnas empatadas en la mayor penalización
     criterio_desempate: str | None
     celda: tuple[int, int]
     costo: ValorM
     cantidad: Fraction
     empate_celdas: list
     criterio_celda: str | None
-    tachada: tuple                       # línea tachada en este paso
-    simultaneo: bool                     # fila y columna satisfechas a la vez
-    asignaciones: dict                   # estado DESPUÉS del paso {(i, j): x_ij}
+    tachada: tuple                       # fila o columna tachada en este paso
+    simultaneo: bool                     # fila y columna completas a la vez
+    asignaciones: dict                   # envíos DESPUÉS del paso {(i, j): cantidad}
     oferta_despues: list[Fraction]
     demanda_despues: list[Fraction]
 
@@ -97,7 +89,7 @@ class ResultadoVogel:
     ficticio: str | None                 # "origen", "destino" o None
     cantidad_ficticia: Fraction
     pasos: list[PasoVogel]
-    asignaciones: dict                   # variables básicas {(i, j): x_ij} (incluye ceros)
+    asignaciones: dict                   # envíos {(i, j): cantidad} (incluye ceros)
     costo_total: ValorM
     casos: list[CasoEspecial]
     celdas_cero: list
@@ -199,13 +191,13 @@ class SolverVogel:
         empatadas = [l for l in lineas if info(l).penalizacion == maxima]
         if len(empatadas) == 1:
             return empatadas[0], [], None
-        # a) desempate por el menor costo de la línea
+        # a) desempata el menor costo
         menor = min(info(l).menor for l in empatadas)
         empatadas2 = [l for l in empatadas if info(l).menor == menor]
         if len(empatadas2) == 1:
             return empatadas2[0], empatadas, CRITERIO_MENOR_COSTO
 
-        # b) desempate por la mayor cantidad que se puede asignar
+        # b) desempata la mayor cantidad que se puede enviar
         def asignable(linea):
             celda, _, _ = self._elegir_celda(self._celdas_de_linea(linea, filas, columnas),
                                              costos, oferta, demanda)
@@ -215,7 +207,7 @@ class SolverVogel:
         empatadas3 = [l for l in empatadas2 if asignable(l) == mayor]
         if len(empatadas3) == 1:
             return empatadas3[0], empatadas, CRITERIO_MAYOR_ASIGNACION
-        # c) la primera en orden (filas antes que columnas)
+        # c) la primera (filas antes que columnas)
         return empatadas3[0], empatadas, CRITERIO_ORDEN
 
     # --------------------------------------------------------------- resolver
@@ -223,24 +215,24 @@ class SolverVogel:
         inicio = time.perf_counter()
         origenes, destinos, oferta, demanda, costos, ficticio, cantidad_ficticia = self._balancear()
         m, n = len(origenes), len(destinos)
-        filas, columnas = list(range(m)), list(range(n))    # líneas activas (no tachadas)
-        s, d = list(oferta), list(demanda)                   # oferta y demanda restantes
+        filas, columnas = list(range(m)), list(range(n))    # filas y columnas sin tachar
+        s, d = list(oferta), list(demanda)                   # oferta y demanda que quedan
         asignaciones: dict = {}
         pasos: list[PasoVogel] = []
         numero = 1
 
-        # PASO 6: repetir mientras quede más de una línea sin tachar
+        # PASO 6: repetir mientras quede más de una fila o columna
         while len(filas) + len(columnas) > 1:
             filas_antes, columnas_antes = list(filas), list(columnas)
             oferta_antes, demanda_antes = list(s), list(d)
             penal_filas, penal_columnas = {}, {}
             linea, empate_lineas, criterio = None, [], None
 
-            if len(filas) == 1:                               # PASO 5: única fila activa
+            if len(filas) == 1:                               # PASO 5: una sola fila
                 modo = MODO_UNICA_FILA
                 linea = (FILA, filas[0])
                 candidatas = self._celdas_de_linea(linea, filas, columnas)
-            elif len(columnas) == 1:                          # PASO 5: única columna activa
+            elif len(columnas) == 1:                          # PASO 5: una sola columna
                 modo = MODO_UNICA_COLUMNA
                 linea = (COLUMNA, columnas[0])
                 candidatas = self._celdas_de_linea(linea, filas, columnas)
@@ -249,17 +241,17 @@ class SolverVogel:
                 candidatas = [(i, j) for i in filas for j in columnas]
             else:
                 modo = MODO_PENALIZACION
-                # PASO 1: penalización de cada fila y columna activa
+                # PASO 1: penalización de cada fila y columna
                 for i in filas:
                     penal_filas[i] = self._penalizacion(FILA, i, [costos[i][j] for j in columnas])
                 for j in columnas:
                     penal_columnas[j] = self._penalizacion(COLUMNA, j, [costos[i][j] for i in filas])
-                # PASO 2: línea con la mayor penalización
+                # PASO 2: elegir la mayor penalización
                 linea, empate_lineas, criterio = self._elegir_linea(
                     penal_filas, penal_columnas, costos, s, d, filas, columnas)
                 candidatas = self._celdas_de_linea(linea, filas, columnas)
 
-            # PASO 3: celda de menor costo y asignación máxima posible
+            # PASO 3: celda más barata y asignación máxima posible
             celda, empate_celdas, criterio_celda = self._elegir_celda(candidatas, costos, s, d)
             i, j = celda
             cantidad = min(s[i], d[j])
@@ -267,7 +259,7 @@ class SolverVogel:
             s[i] -= cantidad
             d[j] -= cantidad
 
-            # PASO 4: tachar SOLO UNA línea
+            # PASO 4: tachar SOLO UNA
             simultaneo = s[i] == 0 and d[j] == 0
             if simultaneo:
                 if len(filas) == 1:
@@ -309,29 +301,29 @@ class SolverVogel:
         p = self.problema
         u = p.unidad_producto
 
-        # a) Desbalance
+        # a) Problema no balanceado
         if r.ficticio == "destino":
             recibe = [f"{r.origenes[i]} ({texto_numero(x)} {u})" for (i, j), x in sorted(r.asignaciones.items())
                       if j == r.n - 1 and x > 0]
             r.casos.append(CasoEspecial(
-                DESBALANCE, "Problema DESBALANCEADO: sobra oferta",
+                DESBALANCE, "Problema NO balanceado: sobra oferta",
                 f"Oferta total = {texto_numero(p.total_oferta)} {u} y demanda total = "
                 f"{texto_numero(p.total_demanda)} {u}. Se agregó «{r.destinos[-1]}» con demanda "
                 f"{texto_numero(r.cantidad_ficticia)} {u} y costo 0. Lo asignado a ese destino NO se envía "
-                f"(queda en inventario en el origen)"
+                f"(se queda en el origen)"
                 + (": " + ", ".join(recibe) + "." if recibe else "."), NIVEL_ADVERTENCIA))
         elif r.ficticio == "origen":
             envia = [f"{r.destinos[j]} ({texto_numero(x)} {u})" for (i, j), x in sorted(r.asignaciones.items())
                      if i == r.m - 1 and x > 0]
             r.casos.append(CasoEspecial(
-                DESBALANCE, "Problema DESBALANCEADO: falta oferta",
+                DESBALANCE, "Problema NO balanceado: falta oferta",
                 f"Demanda total = {texto_numero(p.total_demanda)} {u} y oferta total = "
                 f"{texto_numero(p.total_oferta)} {u}. Se agregó «{r.origenes[-1]}» con oferta "
                 f"{texto_numero(r.cantidad_ficticia)} {u} y costo 0. Lo que «envía» ese origen es "
-                f"DEMANDA INSATISFECHA"
+                f"DEMANDA SIN ATENDER"
                 + (": " + ", ".join(envia) + "." if envia else "."), NIVEL_ADVERTENCIA))
 
-        # b) Empates de penalización y de costo mínimo
+        # b) Empates
         empates = []
         for paso in r.pasos:
             if paso.empate_lineas:
@@ -346,9 +338,8 @@ class SolverVogel:
                                f"({self._texto_criterio(paso.criterio_celda)})")
         if empates:
             r.casos.append(CasoEspecial(
-                EMPATE, "Empates de penalización / costo",
-                "Se presentaron empates y se resolvieron con criterios fijos (menor costo, mayor "
-                "asignación y orden): " + "; ".join(empates) + ".", NIVEL_INFO))
+                EMPATE, "Empates",
+                "Hubo empates y se desempataron con una regla fija (menor costo, más unidades y orden): " + "; ".join(empates) + ".", NIVEL_INFO))
 
         # c) Degeneración
         base_esperada = r.m + r.n - 1
@@ -357,11 +348,11 @@ class SolverVogel:
             celdas = ", ".join(f"({r.origenes[i]}, {r.destinos[j]})" for i, j in r.celdas_cero)
             simultaneos = [str(paso.numero) for paso in r.pasos if paso.simultaneo and paso.cantidad > 0]
             r.casos.append(CasoEspecial(
-                DEGENERACION, "Solución DEGENERADA",
-                f"Hay {positivas} asignaciones positivas y se necesitan m + n − 1 = {base_esperada} "
-                f"variables básicas. Se completó la base con asignaciones de 0 en: {celdas}"
-                + (f" (en el/los paso(s) {', '.join(simultaneos)} se satisficieron a la vez una fila y una "
-                   f"columna)" if simultaneos else "") + ".", NIVEL_ADVERTENCIA))
+                DEGENERACION, "Solución degenerada",
+                f"Hay {positivas} envíos con cantidad y se necesitan {base_esperada} (filas + columnas − 1). "
+                f"Se completó con envíos de 0 en: {celdas}"
+                + (f" (en el/los paso(s) {', '.join(simultaneos)} una fila y una columna se completaron a la "
+                   f"vez)" if simultaneos else "") + ".", NIVEL_ADVERTENCIA))
 
         # d) Rutas prohibidas (costo M)
         prohibidas = p.rutas_prohibidas()
@@ -369,10 +360,9 @@ class SolverVogel:
             celdas = ", ".join(f"{r.origenes[i]} → {r.destinos[j]} ({texto_numero(r.asignaciones[(i, j)])} {u})"
                                for i, j in r.rutas_prohibidas_usadas)
             r.casos.append(CasoEspecial(
-                RUTA_PROHIBIDA, "La solución inicial usa rutas PROHIBIDAS (M)",
-                f"Vogel asignó unidades a rutas con costo M: {celdas}. Ejecute la prueba de optimalidad "
-                f"(MODI): si la solución óptima también las usa, el problema es INFACTIBLE con las rutas "
-                f"permitidas.", NIVEL_ADVERTENCIA))
+                RUTA_PROHIBIDA, "La solución usa rutas PROHIBIDAS (M)",
+                f"Vogel envió unidades por rutas con costo M: {celdas}. Mire la pestaña «6 · MODI»: si la "
+                f"mejor solución también las usa, el problema no tiene solución con las rutas permitidas.", NIVEL_ADVERTENCIA))
         elif prohibidas:
             r.casos.append(CasoEspecial(
                 RUTA_PROHIBIDA, "Rutas prohibidas respetadas",
@@ -380,9 +370,9 @@ class SolverVogel:
                 NIVEL_INFO))
 
         r.casos.append(CasoEspecial(
-            INFORMATIVO, "Vogel da una solución INICIAL",
-            "El método de Vogel entrega una solución inicial factible muy buena, pero no siempre la "
-            "óptima. Compárela con el óptimo (pestaña «6 · MODI») y verifíquelo aparte con el Solver de Excel.",
+            INFORMATIVO, "Vogel da una solución inicial",
+            "Vogel da una solución muy buena, pero no siempre la mejor. Compárela con la mejor posible "
+            "en la pestaña «6 · MODI».",
             NIVEL_INFO))
 
     # ------------------------------------------------------------ auxiliares

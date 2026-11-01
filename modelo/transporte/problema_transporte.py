@@ -1,15 +1,12 @@
 """
 modelo/transporte/problema_transporte.py
 ========================================
-Problema de TRANSPORTE (minimizar costo):
+Guarda los datos de un problema de transporte: qué origen envía a qué
+destino, cuánto cuesta cada envío por unidad, cuánto ofrece cada origen
+y cuánto necesita cada destino. Se busca el menor costo total.
 
-    Min  Σ_i Σ_j  c_ij · x_ij
-    s.a. Σ_j x_ij <= oferta_i      (cada origen i)
-         Σ_i x_ij >= demanda_j     (cada destino j)
-         x_ij >= 0
-
-x_ij = unidades enviadas del origen i al destino j.
-c_ij = costo por unidad enviada (puede ser M = ruta prohibida).
+    x_ij = unidades que se envían del origen i al destino j
+    c_ij = costo de enviar 1 unidad (puede ser M = ruta prohibida)
 """
 from __future__ import annotations
 

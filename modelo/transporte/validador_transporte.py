@@ -1,9 +1,11 @@
 """
 modelo/transporte/validador_transporte.py
 =========================================
-VALIDACIÓN de los datos de un problema de transporte.
+Revisa los datos escritos por el usuario antes de resolver. Si algo está
+mal (vacío, texto en vez de número, valores imposibles) avisa cuál casilla
+es y por qué.
 
-Formato del diccionario::
+Los datos llegan así::
 
     {
       "nombre": "...", "descripcion": "...",
@@ -69,7 +71,7 @@ class ValidadorTransporte:
         self._repetidos(origenes, "orígenes", "nombre_origen", errores)
         self._repetidos(destinos, "destinos", "nombre_destino", errores)
 
-        # 4) Matriz de costos unitarios (número >= 0 o M)
+        # 4) Costos por unidad (número >= 0 o M)
         costos_crudos = datos.get("costos") or []
         costos = []
         for i in range(m):
@@ -95,7 +97,7 @@ class ValidadorTransporte:
                     fila.append(None)
             costos.append(fila)
 
-        # 5) Datos imposibles a nivel global
+        # 5) Revisión del problema completo
         if not errores:
             if sum(oferta, Fraction(0)) == 0:
                 errores.append(("La oferta total es 0: no hay nada que transportar.", ("oferta", 0)))

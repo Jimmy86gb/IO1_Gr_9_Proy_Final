@@ -48,7 +48,7 @@ El programa tiene los **dos métodos asignados al Grupo 9** (tabla de la Secció
 
 | Método | Problema que resuelve | Tamaño máximo | Qué muestra | Casos especiales que avisa |
 |---|---|---|---|---|
-| **Simplex (max / min)** | Programación lineal con restricciones **≤** y b ≥ 0 | **8 variables × 8 restricciones** | Forma estándar; **cada tabla** con variable que **entra**, variable que **sale** y elemento **pivote**; cálculo de Zj y Cj − Zj; operaciones de fila; solución final y z; **análisis de sensibilidad** | No acotado · Óptimos alternativos · Degeneración · Ciclaje |
+| **Simplex (max / min)** | Programación lineal con restricciones **≤** y b ≥ 0 | **8 variables × 8 restricciones** | Forma estándar; **cada tabla** con variable que **entra**, variable que **sale** y elemento **pivote**; cálculo de Zj y Cj − Zj; solución final y z; **análisis de sensibilidad** | No acotado · Óptimos alternativos · Degeneración · Ciclaje |
 | **Vogel** | Transporte (minimizar costo) | **8 orígenes × 8 destinos**, balanceado o no | **Penalizaciones** de filas y columnas en cada paso, línea y **celda escogida**, tabla final y **costo total**; comparación con el óptimo (MODI) | Desbalance (origen/destino ficticio) · Empates de penalización · Degeneración · Rutas prohibidas (M) · Infactibilidad |
 
 > **Importante:** ningún método usa librerías o programas que resuelvan el problema (**no se usa SciPy, PuLP, OR-Tools, NumPy ni el Solver de Excel**). Toda la matemática está escrita por el grupo en la carpeta `modelo/`. Esas herramientas solo se usan **aparte**, para comprobar los resultados en el informe.
@@ -144,7 +144,7 @@ IO1_Grupo9/
 
 ## 5. Ejecutar el programa
 
-En todos los casos se ejecuta el archivo **`main.py`**. Al abrirse verá una ventana con una barra lateral oscura que dice **"IO1 · Grupo 9"** y el menú **Inicio · Simplex (max / min) · Transporte · Vogel · Ayuda**.
+En todos los casos se ejecuta el archivo **`main.py`**. Al abrirse verá una ventana con una barra lateral que dice **"IO1 · Grupo 9"** y el menú **Inicio · Método Simplex · Método de Vogel · Ayuda**.
 
 ### 5.1 PyCharm (recomendado)
 
@@ -258,15 +258,15 @@ El proyecto Usa `unittest`, que viene con Python (no hay que instalar nada). **L
 
 | Zona | Función |
 |---|---|
-| **Barra lateral** | Navegar entre **Inicio**, **Simplex**, **Transporte · Vogel** y **Ayuda** |
-| **Mostrar números como** | Ver los resultados en **fracciones** (5/3) o **decimales** (1.6667). Se actualiza todo al instante |
-| **Franja de color** | Resumen del resultado (verde = óptimo, amarillo = caso especial, rojo = no acotado/infactible) |
-| **Pestañas 1 a 8** | Datos, modelo, paso a paso, tablas, solución, sensibilidad/MODI, gráficas y reporte |
+| **Barra lateral** | Navegar entre **Inicio**, **Método Simplex**, **Método de Vogel** y **Ayuda** |
+| **Números** | Ver los resultados en **fracciones** (5/3) o **decimales** (1.6667). Se actualiza todo al instante |
+| **Barra de estado** | Mensaje de lo último que hizo el programa (abajo). En Vogel, además, una línea arriba resume el resultado (verde = normal, amarillo = caso especial, rojo = sin solución) |
+| **Pestañas 1 a 7** | Datos, modelo, paso a paso, tablas, solución, sensibilidad (Simplex) o MODI (Vogel) y reporte |
 
 ### 7.2 Método Simplex – cómo ingresar un problema
 
-1. En la barra lateral pulse **Simplex (max / min)** y quédese en la pestaña **1 · Datos**.
-2. Para empezar de cero pulse **Limpiar**; para usar un ejemplo, elíjalo en **Ejemplos precargados** y pulse **Cargar ejemplo**.
+1. En la barra lateral pulse **Método Simplex** y quédese en la pestaña **1 · Datos**.
+2. Para empezar de cero pulse **Limpiar**; para usar un ejemplo, elíjalo en **Ejemplos** y pulse **Cargar ejemplo**.
 3. Complete **1. Datos generales**:
 
 | Campo | Qué escribir |
@@ -301,12 +301,11 @@ El proyecto Usa `unittest`, que viene con Python (no hay que instalar nada). **L
 | **4 · Tablas** | Todas las tablas una debajo de otra |
 | **5 · Solución** | Plan óptimo con nombres y unidades, uso de recursos, holguras, avisos de casos especiales y comprobación |
 | **6 · Sensibilidad** | Precios sombra, costos reducidos, rangos de cada **cⱼ** y de cada **bᵢ**, matriz B⁻¹ y una frase de interpretación para cada uno |
-| **7 · Gráficas** | Evolución de z, valor de cada variable, aporte a z, uso de recursos y precios sombra |
-| **8 · Reporte** | Todo el procedimiento en texto; botones **Copiar**, **Guardar .txt** |
+| **7 · Reporte** | Todo el procedimiento en texto (solo lectura). Se puede seleccionar y copiar con **Ctrl + C** |
 
 ### 7.4 Método de Vogel – cómo ingresar un problema
 
-1. En la barra lateral pulse **Transporte · Vogel** y quédese en **1 · Datos**.
+1. En la barra lateral pulse **Método de Vogel** y quédese en **1 · Datos**.
 2. Complete los datos generales:
 
 | Campo | Qué escribir |
@@ -338,8 +337,7 @@ El proyecto Usa `unittest`, que viene con Python (no hay que instalar nada). **L
 | **4 · Tablas** | Todos los pasos uno debajo de otro |
 | **5 · Solución** | Tabla final, plan de envíos con nombres y unidades, **costo total** con su cálculo y avisos de casos especiales |
 | **6 · MODI** | Prueba de optimalidad (uᵢ, vⱼ, costos reducidos dᵢⱼ, ciclo + / −) y **comparación del costo de Vogel con el óptimo** |
-| **7 · Gráficas** | Red de distribución, costo por ruta, oferta usada, demanda atendida y penalización máxima por paso |
-| **8 · Reporte** | Todo el procedimiento en texto; botones **Copiar**, **Guardar .txt** |
+| **7 · Reporte** | Todo el procedimiento en texto (solo lectura). Se puede seleccionar y copiar con **Ctrl + C** |
 
 ### 7.6 Cómo escribir los números
 
@@ -370,7 +368,7 @@ El proyecto Usa `unittest`, que viene con Python (no hay que instalar nada). **L
 
 ## 8. Ejemplos precargados
 
-Están en la carpeta `ejemplos/` como archivos `.json` (los datos nunca están dentro del código). Se cargan desde **Ejemplos precargados → Cargar ejemplo**.
+Están en la carpeta `ejemplos/` como archivos `.json` (los datos nunca están dentro del código). Se cargan desde **Ejemplos → Cargar ejemplo**.
 
 ### Simplex (`ejemplos/simplex/`)
 
@@ -405,9 +403,9 @@ Escriba los datos en la pestaña **1 · Datos**, pulse **Guardar…** y guárdel
 
 ```
 IO1_Grupo9/
-├── main.py                         
-├── README.md                          Guia
-├── requirements.txt                   ── Archivo principal que se ejecuta para abrir el programa
+├── main.py                            Archivo principal que se ejecuta
+├── README.md                          Guía
+├── requirements.txt
 │
 ├── modelo/                            ── MATEMÁTICA DE LOS MÉTODOS ──
 │   ├── numeros.py                     Números exactos (fracciones) y costos con M
@@ -424,7 +422,7 @@ IO1_Grupo9/
 │       ├── problema_transporte.py     Clases del problema de transporte
 │       ├── validador_transporte.py    Validación de datos de transporte
 │       ├── solver_vogel.py            MÉTODO DE VOGEL paso a paso
-│       └── optimizador_modi.py        Prueba de optimalidad MODI
+│       └── optimizador_modi.py        MODI: revisa si Vogel se puede mejorar
 │
 ├── vista/                             ── INTERFAZ GRÁFICA ──
 │   ├── tema.py                        Colores, fuentes y estilos
@@ -432,7 +430,7 @@ IO1_Grupo9/
 │   ├── ventana_principal.py           Ventana, barra lateral y navegación
 │   ├── vista_inicio.py                Pantalla de inicio
 │   ├── vista_ayuda.py                 Ayuda dentro del programa
-│   ├── componentes/                   Tablas, gráficas, tarjetas, avisos
+│   ├── componentes/                   Tablas, tarjetas, avisos, reporte
 │   ├── explicaciones/                 Textos del paso a paso (Simplex, sensibilidad, Vogel, MODI)
 │   ├── reportes/                      Reporte en texto
 │   ├── simplex/                       Pestañas del Método Simplex
@@ -465,7 +463,7 @@ El modelo matemático, la formulación del caso real, la lógica de los algoritm
 | Herramienta                                                            | Para qué se usó                                                                                                 | Cómo se verificó                                                                                                                                                  |
 |------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Asistente de IA (Claude)                                               | Sugerencias para estructurar el código en el patrón MVC y ayuda para redactar los comentarios y este manual (README). | El grupo revisó que la separación en Modelo, Vista y Controlador fuera correcta, reviso cada comentario, y comprobó que el README describe fielmente el proyecto. |
-| Asistente de IA (Claude)                                               | Ayuda para identificar errores de ejecución (depuración) y para explicar mensajes de error de Python y PyCharm. | Se usó para identificar los errores que se presentaban al momento de escribir el código del software.                                                             |
+| Asistente de IA (Claude)                                               | Ayuda para identificar errores de ejecución (depuración), corregir referencias rotas entre archivos, simplificar la interfaz y los textos, y explicar mensajes de error de Python y PyCharm. | Se ejecutó el programa y las 35 pruebas automáticas después de cada corrección, y se revisó cada pantalla a mano. |
 | Validacion con Libro de Taha, *Investigación de Operaciones* (Pearson) | Referencia académica para comprobar que el software resuelve correctamente, usando ejercicios ya resueltos del libro. | El software coincidió con el libro: modelo Reddy Mikks (Simplex) y modelo de transporte SunRay (Vogel).                                                           |
 
 

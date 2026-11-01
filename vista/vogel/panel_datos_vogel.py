@@ -1,10 +1,9 @@
 """
 vista/vogel/panel_datos_vogel.py
 ================================
-Pantalla de INGRESO DE DATOS del problema de transporte (Vogel). Se
-escribe como en los libros: destinos arriba, orígenes a la izquierda,
-costos unitarios en el centro, oferta a la derecha y demanda abajo.
-Muestra en vivo si el problema está balanceado.
+Pestaña para escribir los datos del problema de transporte: destinos arriba,
+orígenes a la izquierda, costos en el centro, oferta a la derecha y demanda
+abajo. Dice en vivo si el problema está balanceado.
 """
 from __future__ import annotations
 
@@ -47,11 +46,11 @@ class PanelDatosVogel(tk.Frame):
         barra.pack(fill="x", pady=(0, 2))
         interior = tk.Frame(barra, bg=COLORES["superficie"])
         interior.pack(fill="x", padx=14, pady=10)
-        # El botón Resolver se coloca primero para que siempre quede visible
+        # El botón Resolver va primero para que siempre se vea
         ttk.Button(interior, text="Resolver con Vogel  ►", style="Primario.TButton",
                    command=lambda: self._llamar("resolver")).pack(side="right")
-        etiqueta(interior, "Ejemplos precargados:", "base_negrita").pack(side="left")
-        self.combo_ejemplos = ttk.Combobox(interior, textvariable=self.var_ejemplo, state="readonly", width=40)
+        etiqueta(interior, "Ejemplos:", "base_negrita").pack(side="left")
+        self.combo_ejemplos = ttk.Combobox(interior, textvariable=self.var_ejemplo, state="readonly", width=26)
         self.combo_ejemplos.pack(side="left", padx=(8, 6))
         ttk.Button(interior, text="Cargar ejemplo", style="Chico.TButton",
                    command=lambda: self._llamar("cargar_ejemplo", self.combo_ejemplos.current())).pack(side="left")
@@ -66,8 +65,8 @@ class PanelDatosVogel(tk.Frame):
     def _crear_contenido(self, contenedor):
         contenedor.configure(padx=18, pady=14)
         t1 = Tarjeta(contenedor, "1. Datos generales del problema de transporte",
-                     "Escriba el nombre, la unidad del producto que se transporta y la moneda del costo. Luego "
-                     "el número de orígenes (plantas, bodegas...) y de destinos (clientes, tiendas...).")
+                     "Escriba el nombre, qué se transporta y en qué moneda están los costos. Luego elija cuántos "
+                     "orígenes (de donde sale) y cuántos destinos (a donde llega) hay.")
         t1.pack(fill="x", pady=(0, 12))
         g = t1.cuerpo
         etiqueta(g, "Nombre del problema").grid(row=0, column=0, sticky="w", pady=4)
@@ -94,9 +93,9 @@ class PanelDatosVogel(tk.Frame):
 
         self.tarjeta_tabla = Tarjeta(
             contenedor, "2. Tabla de transporte: costos unitarios, oferta y demanda",
-            "Cada casilla del centro es el COSTO de enviar 1 unidad del origen (fila) al destino (columna). "
-            "Escriba M si una ruta está prohibida. La oferta es lo máximo que puede enviar cada origen y la "
-            "demanda lo que necesita cada destino. Puede estar balanceado o no.")
+            "Cada casilla del centro es el costo de enviar 1 unidad del origen (fila) al destino (columna). "
+            "Escriba M si una ruta está prohibida. La oferta es lo que puede enviar cada origen y la demanda "
+            "es lo que necesita cada destino.")
         self.tarjeta_tabla.pack(fill="x", pady=(0, 12))
         acciones = tk.Frame(self.tarjeta_tabla.cuerpo, bg=COLORES["superficie"])
         acciones.pack(fill="x", pady=(0, 8))
@@ -113,13 +112,11 @@ class PanelDatosVogel(tk.Frame):
         t3 = Tarjeta(contenedor, "Ayuda rápida")
         t3.pack(fill="x", pady=(0, 12))
         for texto in ("• Números: 12 · 2.5 · 2,5 · 3/4 (sin separador de miles: escriba 1250000, no 1.250.000).",
-                      "• Si la oferta total es mayor que la demanda se agrega un DESTINO FICTICIO (lo que recibe se "
-                      "queda en inventario).",
-                      "• Si la demanda total es mayor que la oferta se agrega un ORIGEN FICTICIO (lo que envía es "
-                      "demanda insatisfecha).",
-                      "• El costo de las rutas ficticias es 0. Una ruta con costo M nunca debería usarse; si el óptimo "
-                      "la necesita, el problema es infactible.",
-                      "• Vogel da una solución inicial; en la pestaña «6 · MODI» se compara con el óptimo."):
+                      "• Si sobra oferta, el programa agrega un destino ficticio (lo que recibe queda sin enviar).",
+                      "• Si falta oferta, agrega un origen ficticio (lo que «envía» es demanda sin atender).",
+                      "• Las rutas ficticias cuestan 0. Una ruta con M no debería usarse; si hace falta, el problema "
+                      "no tiene solución.",
+                      "• Vogel da una buena solución inicial; en «6 · MODI» se compara con la mejor posible."):
             tk.Label(t3.cuerpo, text=texto, font=FUENTES["base"], bg=COLORES["superficie"], fg=COLORES["texto"],
                      anchor="w", justify="left", wraplength=1100).pack(fill="x", pady=1)
 
@@ -153,7 +150,7 @@ class PanelDatosVogel(tk.Frame):
     def _construir_rejilla(self):
         for hijo in self.rejilla.winfo_children():
             hijo.destroy()
-        self.marco.reiniciar_ancho()                 # la tabla puede volverse más angosta
+        self.marco.reiniciar_ancho()                 # la tabla puede quedar más angosta
         for clave in [k for k in self.campos if k[0] not in ("n", "m")]:
             del self.campos[clave]
         g = self.rejilla
@@ -235,7 +232,7 @@ class PanelDatosVogel(tk.Frame):
         oferta, demanda = suma(self.ofertas), suma(self.demandas)
         if oferta is None or demanda is None:
             self.etiqueta_total.configure(text="—")
-            self.balance.configure(text="Complete la oferta y la demanda para ver si el problema está balanceado.",
+            self.balance.configure(text="Complete la oferta y la demanda para ver si está balanceado.",
                                    bg=COLORES["info_suave"], fg=COLORES["info"])
             return
         self.etiqueta_total.configure(text=f"{FORMATO.num(oferta)} / {FORMATO.num(demanda)}")
@@ -243,12 +240,12 @@ class PanelDatosVogel(tk.Frame):
             texto = (f"BALANCEADO: oferta total = demanda total = {FORMATO.num(oferta)} {unidad}.")
             fondo, color = COLORES["exito_suave"], COLORES["exito"]
         elif oferta > demanda:
-            texto = (f"DESBALANCEADO: oferta total {FORMATO.num(oferta)} > demanda total {FORMATO.num(demanda)}. Al "
-                     f"resolver se agregará un DESTINO FICTICIO con demanda {FORMATO.num(oferta - demanda)} {unidad}.")
+            texto = (f"NO BALANCEADO: oferta total {FORMATO.num(oferta)} > demanda total {FORMATO.num(demanda)}. Se "
+                     f"agregará un destino ficticio con demanda {FORMATO.num(oferta - demanda)} {unidad}.")
             fondo, color = COLORES["advertencia_suave"], COLORES["advertencia"]
         else:
-            texto = (f"DESBALANCEADO: demanda total {FORMATO.num(demanda)} > oferta total {FORMATO.num(oferta)}. Al "
-                     f"resolver se agregará un ORIGEN FICTICIO con oferta {FORMATO.num(demanda - oferta)} {unidad}.")
+            texto = (f"NO BALANCEADO: demanda total {FORMATO.num(demanda)} > oferta total {FORMATO.num(oferta)}. Se "
+                     f"agregará un origen ficticio con oferta {FORMATO.num(demanda - oferta)} {unidad}.")
             fondo, color = COLORES["advertencia_suave"], COLORES["advertencia"]
         self.balance.configure(text=texto, bg=fondo, fg=color)
 

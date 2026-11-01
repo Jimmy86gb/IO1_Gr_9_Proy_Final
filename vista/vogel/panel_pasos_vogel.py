@@ -1,10 +1,9 @@
 """
 vista/vogel/panel_pasos_vogel.py
 ================================
-* PanelPasosVogel: PASO A PASO de Vogel con navegación. Cada paso muestra
-  las penalizaciones de filas y columnas, la línea escogida, la celda
-  escogida, la asignación y la línea tachada; debajo, la explicación.
-* PanelTodosPasosVogel: todas las tablas de los pasos, una debajo de otra.
+* PanelPasosVogel: muestra Vogel paso a paso, con botones para avanzar y
+  retroceder. Arriba va la tabla y abajo la explicación.
+* PanelTodosPasosVogel: todas las tablas, una debajo de otra.
 """
 from __future__ import annotations
 
@@ -17,7 +16,7 @@ from ..formato import FORMATO
 from ..tema import COLORES, FUENTES
 
 LEYENDA_VOGEL = [(COLORES["elegida"], "Celda escogida en el paso"), (COLORES["asignada"], "Celda ya asignada"),
-                 (COLORES["linea_elegida"], "Línea de mayor penalización"), (COLORES["primario"], "Penalización mayor"),
+                 (COLORES["linea_elegida"], "Fila o columna con más penalización"), (COLORES["primario"], "Penalización más alta"),
                  (COLORES["tachado"], "Línea tachada"), (COLORES["ficticio"], "Ficticio"),
                  (COLORES["prohibida"], "Ruta prohibida (M)")]
 
@@ -54,7 +53,7 @@ class PanelPasosVogel(tk.Frame):
         self.paneles.pack(fill="both", expand=True, pady=(6, 0))
         arriba = tk.Frame(self.paneles, bg=COLORES["superficie"], highlightbackground=COLORES["borde"],
                           highlightthickness=1)
-        self.titulo = tk.Label(arriba, text="Resuelva un problema para ver el paso a paso.", font=FUENTES["h3"],
+        self.titulo = tk.Label(arriba, text="Resuelva un problema para ver los pasos.", font=FUENTES["h3"],
                                bg=COLORES["superficie"], fg=COLORES["texto"], anchor="w")
         self.titulo.pack(fill="x", padx=14, pady=(10, 4))
         self.area_tabla = MarcoDesplazable(arriba, fondo=COLORES["superficie"], ajustar_ancho=False)
@@ -138,10 +137,10 @@ class PanelTodosPasosVogel(tk.Frame):
                        f"{FORMATO.num(paso.cantidad)} {r.problema.unidad_producto} · se tacha la "
                        f"{TT.nombre_linea(r, paso.tachada)}")
             if paso.linea is not None and paso.modo == "penalizacion":
-                resumen = f"Mayor penalización en la {TT.nombre_linea(r, paso.linea)} · " + resumen
+                resumen = f"Mayor penalización: {TT.nombre_linea(r, paso.linea)} · " + resumen
             if paso.empate_lineas:
-                resumen += " · EMPATE de penalización"
+                resumen += " · empate de penalización"
             if paso.simultaneo and len(paso.filas_activas) + len(paso.columnas_activas) > 2:
-                resumen += " · DEGENERACIÓN (fila y columna a la vez)"
+                resumen += " · fila y columna se completan a la vez"
             tk.Label(tarjeta, text=resumen, font=FUENTES["base"], bg=COLORES["superficie"], fg=COLORES["texto_suave"],
                      anchor="w", justify="left", wraplength=1100).pack(fill="x", padx=12, pady=(6, 10))
